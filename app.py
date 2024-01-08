@@ -48,7 +48,7 @@ def setup_streamlit():
     """
     st.set_page_config(
     page_title="Topical Authority with N-grams - Kevin (Claneo)",
-    page_icon=":balance_scale: ",
+    page_icon=":balance_scale:",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
@@ -394,12 +394,27 @@ def process_ngrams(df, numGrams):
         return ' '.join([word for word in query.lower().split() if word not in stop_words])
 
     df['clean_query'] = df['query'].apply(clean_query)
+
+    # Generate n-grams
     ngrams_result = word_tokenize(df['clean_query'].tolist(), phrase_len=numGrams)
+
+    # Flatten the list of n-grams
     ngrams_flat = [' '.join(ngram) for sublist in ngrams_result for ngram in sublist]
+
+    # Create a DataFrame from the n-grams
     ngrams_df = pd.DataFrame({'ngram': ngrams_flat})
+
+    # Count the occurrences of each n-gram
     ngrams_counts = ngrams_df['ngram'].value_counts().reset_index()
     ngrams_counts.columns = ['ngram', 'count']
-    ngrams_clicks = df.groupby('ngram')['clicks'].sum().reset_index()
+
+    # Merge the original dataframe with ngrams_counts on the 'clean_query' and 'ngram' columns
+    merged_df = pd.merge(df, ngrams_counts, left_on='clean_query', right_on='ngram', how='left')
+
+    # Group by ngram and sum the clicks
+    ngrams_clicks = merged_df.groupby('ngram')['clicks'].sum().reset_index()
+
+    # Merge ngrams_counts with ngrams_clicks
     final_df = pd.merge(ngrams_counts, ngrams_clicks, on='ngram')
     return final_df
 
