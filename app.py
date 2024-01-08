@@ -11,7 +11,11 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import pandas as pd
 import searchconsole
-from advertools import knowledge_graph
+
+from advertools import word_tokenize
+import nltk
+from nltk.corpus import stopwords
+nltk.download('stopwords')
 
 # Configuration: Set to True if running locally, False if running on Streamlit Cloud
 # IS_LOCAL = True
@@ -80,9 +84,9 @@ def init_session_state():
     if 'selected_device' not in st.session_state:
         st.session_state.selected_device = 'All Devices'
     if 'selected_max_position' not in st.session_state:
-        st.session_state.selected_max_position = 5
+        st.session_state.selected_max_position = 100
     if 'selected_min_clicks' not in st.session_state:
-        st.session_state.selected_min_clicks = 100
+        st.session_state.selected_min_clicks = 0
 
 
 # -------------
@@ -383,44 +387,21 @@ def show_fetch_data_button(webproperty, search_type, start_date, end_date, selec
             st.write(len(report))
             download_csv_link(report)
             
-def fetch_knowledge_graph_data(df, api_key):
-    """
-    Uses the knowledge_graph function from advertools to fetch data from the Google Knowledge Graph API.
-    The function expects a DataFrame 'df' with a column named 'query'.
-    """
-    if 'query' in df.columns:
-        try:
-            entities = knowledge_graph(key=api_key, query=df['query'], limit=5)
-            return entities
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return None
-    else:
-        print("The DataFrame does not have a 'query' column.")
-        return None
-        
-def fetch_knowledge_graph_loading(df, api_key):
-    """
-    Fetches Knowledge Graph data with a loading indicator.
-    Utilizes 'fetch_knowledge_graph_data' for data retrieval.
-    Returns the fetched data as a DataFrame.
-    """
-    with st.spinner('Fetching Knowledge Graph data...'):
-        return fetch_knowledge_graph_data(df, api_key)
+def process_ngrams(df, numGrams):
+    stop_words = set(stopwords.words('english'))
 
+    def clean_query(query):
+        return ' '.join([word for word in query.lower().split() if word not in stop_words])
 
-def show_fetch_knowledge_graph_button(df, api_key):
-    """
-    Displays a button to fetch Knowledge Graph data based on the queries from the provided DataFrame.
-    Shows the combined DataFrame upon successful data fetching.
-    """
-    if st.button('Check Entities with Knowledge Graph'):
-        kg_data = fetch_knowledge_graph_loading(df, api_key)
-        if kg_data is not None:
-            df_kg = kg_data[["query", "resultScore", "result.name", "result.description", "result.@type", "result.detailedDescription.articleBody"]]
-
-            fetched_data_filtered = df.sort_values(by=['query', 'clicks'], ascending=[True, False]).drop_duplicates('query')
-            combined_df = pd.merge(fetched_data_filtered, df_kg, on='query', how='inner')
+    df['clean_query'] = df['query'].apply(clean_query)
+    ngrams_result = word_tokenize(df['clean_query'].tolist(), phrase_len=numGrams)
+    ngrams_flat = [' '.join(ngram) for sublist in ngrams_result for ngram in sublist]
+    ngrams_df = pd.DataFrame({'ngram': ngrams_flat})
+    ngrams_counts = ngrams_df['ngram'].value_counts().reset_index()
+    ngrams_counts.columns = ['ngram', 'count']
+    ngrams_clicks = df.groupby('ngram')['clicks'].sum().reset_index()
+    final_df = pd.merge(ngrams_counts, ngrams_clicks, on='ngram')
+    return final_df
 
 # -------------
 # Main Streamlit App Function
@@ -460,8 +441,9 @@ def main():
             min_clicks = show_min_clicks_input()
             show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks)
             if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
-                show_fetch_knowledge_graph_button(st.session_state.fetched_data, st.secrets["know_key"])
-
+                # Process n-grams from the fetched data
+                ngrams_df = process_ngrams(st.session_state.fetched_data, numGrams=2)
+                st.dataframe(ngrams_df)
 
 if __name__ == "__main__":
     main()
