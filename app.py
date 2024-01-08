@@ -354,7 +354,7 @@ def show_max_position_selector():
     max_position = st.slider(
         "Select Maximum Position for Queries:",
         min_value=1, 
-        max_value=20, 
+        max_value=100, 
         value=(st.session_state.selected_max_position)
     )
     st.session_state.selected_max_position = max_position
