@@ -479,7 +479,7 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
 
             # Using download_csv_link function for CSV download
-            download_csv_link(ngrams_df, filename=f"ngrams_{n}.csv")
+            download_csv_link(ngrams_df)
             
 if __name__ == "__main__":
     main()
