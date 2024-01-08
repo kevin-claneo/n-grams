@@ -50,7 +50,7 @@ def setup_streamlit():
     """
     st.set_page_config(
     page_title="Topical Authority with N-grams - Kevin (Claneo)",
-    page_icon=":balance_scale:",
+    page_icon=":weight_lifter:",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
