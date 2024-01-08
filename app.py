@@ -7,6 +7,7 @@ import base64
 # Related third-party imports
 import streamlit as st
 from streamlit_elements import Elements
+from streamlit_tags import st_tags
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import pandas as pd
@@ -88,7 +89,7 @@ def init_session_state():
     if 'selected_max_position' not in st.session_state:
         st.session_state.selected_max_position = 100
     if 'selected_min_clicks' not in st.session_state:
-        st.session_state.selected_min_clicks = 0
+        st.session_state.selected_min_clicks = 1
 
 
 # -------------
@@ -199,13 +200,13 @@ def fetch_gsc_data(webproperty, search_type, start_date, end_date, dimensions, m
         return pd.DataFrame()
 
 
-def fetch_data_loading(webproperty, search_type, start_date, end_date, dimensions, max_position, min_clicks, device_type=None):
+def fetch_data_loading(webproperty, search_type, start_date, end_date, dimensions, max_position, min_clicks, brand_keywords, device_type=None):
     """
     Fetches Google Search Console data with a loading indicator. Utilises 'fetch_gsc_data' for data retrieval.
     Returns the fetched data as a DataFrame.
     """
     with st.spinner('Fetching data...'):
-        return fetch_gsc_data(webproperty, search_type, start_date, end_date, dimensions, max_position, min_clicks, device_type)
+        return fetch_gsc_data(webproperty, search_type, start_date, end_date, dimensions, max_position, min_clicks, device_type, brand_keywords)
 
 
 # -------------
@@ -373,15 +374,18 @@ def show_min_clicks_input():
     return min_clicks
 
 
+
 fetched_data = None
 
-def show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks):
+def show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks, brand_keywords):
     """
     Displays a button to fetch data based on selected parameters.
     Shows the report DataFrame upon successful data fetching.
     """
     if st.button("Fetch Data"):
-        report = fetch_data_loading(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks)
+        report = fetch_data_loading(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks, brand_keywords)
+        for brand_keyword in brand_keywords:
+                        report = report[~report['query'].str.contains(brand_keyword, case=False, na=False)]
         
         if report is not None:
             st.session_state.fetched_data = report  # Store in session state
@@ -472,11 +476,12 @@ def main():
             selected_dimensions = show_dimensions_selector(search_type)
             max_position = show_max_position_selector()
             min_clicks = show_min_clicks_input()
-            show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks)
-    if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
-        for n in range(1, 5):  # For n-grams of length 1 to 4
-            ngrams_df, fig = process_and_plot_ngrams(st.session_state.fetched_data, numGrams=n)
-            st.plotly_chart(fig, use_container_width=True)
+            brand_keywords = st_tags(value=[], suggestions=[], label="Brand Keywords", text="Enter brand keywords to exclude", maxtags=-1, key="brand_keywords")
+            show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks, brand_keywords)
+            if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
+                for n in range(1, 5):  # For n-grams of length 1 to 4
+                    ngrams_df, fig = process_and_plot_ngrams(st.session_state.fetched_data, numGrams=n)
+                    st.plotly_chart(fig, use_container_width=True)
 
             # Using download_csv_link function for CSV download
             download_csv_link(ngrams_df)
