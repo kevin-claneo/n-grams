@@ -83,7 +83,7 @@ def init_session_state():
     if 'selected_date_range' not in st.session_state:
         st.session_state.selected_date_range = 'Last 7 Days'
     if 'selected_dimensions' not in st.session_state:
-        st.session_state.selected_dimensions = ['query']
+        st.session_state.selected_dimensions = ['query','page']
     if 'selected_device' not in st.session_state:
         st.session_state.selected_device = 'All Devices'
     if 'selected_max_position' not in st.session_state:
@@ -412,30 +412,39 @@ def process_ngrams(df, numGrams, minOccurrences=1):
     ngrams_flat = [ngram for sublist in df['ngrams'] for ngram in sublist]
     ngram_counts = Counter(ngrams_flat)
 
-    # Filter ngrams based on minimum occurrences
-    filtered_ngrams = {ngram: count for ngram, count in ngram_counts.items() if count >= minOccurrences}
 
     # Sum clicks for each ngram
     ngram_clicks = {}
+    ngram_pages = {}
+
+    calculate_pages = 'page' in df.columns
+     # Process each row for ngrams, clicks, and pages (if applicable)
     for index, row in df.iterrows():
         for ngram in row['ngrams']:
-            if ngram in filtered_ngrams:
+            if ngram in ngram_counts and ngram_counts[ngram] >= minOccurrences:
                 ngram_clicks[ngram] = ngram_clicks.get(ngram, 0) + row['clicks']
+                if calculate_pages:
+                    ngram_pages[ngram] = ngram_pages.get(ngram, set()).union({row['page']})
 
-    # Prepare the final DataFrame
+    # Summarize results
     final_data = []
-    for ngram, count in filtered_ngrams.items():
-        clicks = ngram_clicks.get(ngram, 0)
-        final_data.append([' '.join(ngram), count, clicks])
+    for ngram, count in ngram_counts.items():
+        if count >= minOccurrences:
+            clicks = ngram_clicks.get(ngram, 0)
+            ngram_str = ' '.join(ngram)
+            if calculate_pages:
+                pages_count = len(ngram_pages[ngram])
+                final_data.append([ngram_str, count, clicks, pages_count])
+            else:
+                final_data.append([ngram_str, count, clicks])
 
-    final_df = pd.DataFrame(final_data, columns=['Ngram', 'Occurrences', 'Total Clicks'])
+    # Define columns based on whether 'page' is in the DataFrame
+    columns = ['Ngram', 'Occurrences', 'Total Clicks']
+    if calculate_pages:
+        columns.append('Unique Pages')
+
+    final_df = pd.DataFrame(final_data, columns=columns)
     return final_df.sort_values(by='Total Clicks', ascending=False)
-
-def process_and_plot_ngrams(df, numGrams, minOccurrences=1):
-    ngrams_df = process_ngrams(df, numGrams, minOccurrences)
-    fig = px.bar(ngrams_df.head(10), x='Total Clicks', y='Ngram', title=f'Top 10 {numGrams}-grams by Total Clicks')
-    return ngrams_df, fig
-
 
 # -------------
 # Main Streamlit App Function
