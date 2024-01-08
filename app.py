@@ -390,13 +390,13 @@ def show_fetch_data_button(webproperty, search_type, start_date, end_date, selec
         if report is not None:
             st.session_state.fetched_data = report  # Store in session state
             
+stop_words = set(stopwords.words('english')) | set(stopwords.words('german'))
+re_allowed_chars = re.compile("[^A-Za-z0-9 '’äöüßÄÖÜ]+")
+
 def process_ngrams(df, numGrams, minOccurrences=1):
     # Ensure 'clicks' column is of integer type
     df['clicks'] = pd.to_numeric(df['clicks'], errors='coerce').fillna(0).astype(int)
 
-    # Define stopwords and regex for allowed characters (including German characters)
-    stop_words = set(stopwords.words('english')) | set(stopwords.words('german'))
-    re_allowed_chars = re.compile("[^A-Za-z0-9 '’äöüßÄÖÜ]+")
 
     # Clean and tokenize the queries
     def clean_and_tokenize(query):
