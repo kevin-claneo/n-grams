@@ -4,3 +4,4 @@ searchconsole==0.0.4
 streamlit-elements==0.0.2
 nltk==3.8.1
 plotly==5.18.0
+streamlit-tags
