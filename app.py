@@ -83,7 +83,7 @@ def init_session_state():
     if 'selected_date_range' not in st.session_state:
         st.session_state.selected_date_range = 'Last 7 Days'
     if 'selected_dimensions' not in st.session_state:
-        st.session_state.selected_dimensions = ['query','page']
+        st.session_state.selected_dimensions = ['query']
     if 'selected_device' not in st.session_state:
         st.session_state.selected_device = 'All Devices'
     if 'selected_max_position' not in st.session_state:
