@@ -12,7 +12,9 @@ from googleapiclient.discovery import build
 import pandas as pd
 import searchconsole
 
-from advertools import word_tokenize
+from collections import Counter
+import re
+import plotly.express as px
 import nltk
 from nltk.corpus import stopwords
 nltk.download('stopwords')
@@ -80,7 +82,7 @@ def init_session_state():
     if 'selected_date_range' not in st.session_state:
         st.session_state.selected_date_range = 'Last 7 Days'
     if 'selected_dimensions' not in st.session_state:
-        st.session_state.selected_dimensions = ['page', 'query']
+        st.session_state.selected_dimensions = ['query']
     if 'selected_device' not in st.session_state:
         st.session_state.selected_device = 'All Devices'
     if 'selected_max_position' not in st.session_state:
@@ -384,39 +386,55 @@ def show_fetch_data_button(webproperty, search_type, start_date, end_date, selec
         if report is not None:
             st.session_state.fetched_data = report  # Store in session state
             show_dataframe(report)
-            st.write(len(report))
             download_csv_link(report)
             
-def process_ngrams(df, numGrams):
-    stop_words = set(stopwords.words('english'))
 
-    def clean_query(query):
-        return ' '.join([word for word in query.lower().split() if word not in stop_words])
+def process_ngrams(df, numGrams, minOccurrences=1):
+    # Ensure 'clicks' column is of integer type
+    df['clicks'] = pd.to_numeric(df['clicks'], errors='coerce').fillna(0).astype(int)
 
-    df['clean_query'] = df['query'].apply(clean_query)
+    # Define stopwords and regex for allowed characters (including German characters)
+    stop_words = set(stopwords.words('english')) | set(stopwords.words('german'))
+    re_allowed_chars = re.compile("[^A-Za-z0-9 '’äöüßÄÖÜ]+")
 
-    # Generate n-grams
-    ngrams_result = word_tokenize(df['clean_query'].tolist(), phrase_len=numGrams)
+    # Clean and tokenize the queries
+    def clean_and_tokenize(query):
+        query = re_allowed_chars.sub('', query.lower())
+        words = query.split()
+        words = [word for word in words if word not in stop_words]
+        return [tuple(words[i:i + numGrams]) for i in range(len(words) - numGrams + 1)]
 
-    # Flatten the list of n-grams
-    ngrams_flat = [' '.join(ngram) for sublist in ngrams_result for ngram in sublist]
+    # Apply the function to the DataFrame
+    df['ngrams'] = df['query'].apply(clean_and_tokenize)
 
-    # Create a DataFrame from the n-grams
-    ngrams_df = pd.DataFrame({'ngram': ngrams_flat})
+    # Flatten the list of ngrams and count occurrences
+    ngrams_flat = [ngram for sublist in df['ngrams'] for ngram in sublist]
+    ngram_counts = Counter(ngrams_flat)
 
-    # Count the occurrences of each n-gram
-    ngrams_counts = ngrams_df['ngram'].value_counts().reset_index()
-    ngrams_counts.columns = ['ngram', 'count']
+    # Filter ngrams based on minimum occurrences
+    filtered_ngrams = {ngram: count for ngram, count in ngram_counts.items() if count >= minOccurrences}
 
-    # Merge the original dataframe with ngrams_counts on the 'clean_query' and 'ngram' columns
-    merged_df = pd.merge(df, ngrams_counts, left_on='clean_query', right_on='ngram', how='left')
+    # Sum clicks for each ngram
+    ngram_clicks = {}
+    for index, row in df.iterrows():
+        for ngram in row['ngrams']:
+            if ngram in filtered_ngrams:
+                ngram_clicks[ngram] = ngram_clicks.get(ngram, 0) + row['clicks']
 
-    # Group by ngram and sum the clicks
-    ngrams_clicks = merged_df.groupby('ngram')['clicks'].sum().reset_index()
+    # Prepare the final DataFrame
+    final_data = []
+    for ngram, count in filtered_ngrams.items():
+        clicks = ngram_clicks.get(ngram, 0)
+        final_data.append([' '.join(ngram), count, clicks])
 
-    # Merge ngrams_counts with ngrams_clicks
-    final_df = pd.merge(ngrams_counts, ngrams_clicks, on='ngram')
-    return final_df
+    final_df = pd.DataFrame(final_data, columns=['Ngram', 'Occurrences', 'Total Clicks'])
+    return final_df.sort_values(by='Total Clicks', ascending=False)
+
+def process_and_plot_ngrams(df, numGrams, minOccurrences=1):
+    ngrams_df = process_ngrams(df, numGrams, minOccurrences)
+    fig = px.bar(ngrams_df.head(10), x='Total Clicks', y='Ngram', title=f'Top 10 {numGrams}-grams by Total Clicks')
+    return ngrams_df, fig
+
 
 # -------------
 # Main Streamlit App Function
@@ -455,10 +473,13 @@ def main():
             max_position = show_max_position_selector()
             min_clicks = show_min_clicks_input()
             show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks)
-            if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
-                # Process n-grams from the fetched data
-                ngrams_df = process_ngrams(st.session_state.fetched_data, numGrams=2)
-                st.dataframe(ngrams_df)
+    if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
+        for n in range(1, 5):  # For n-grams of length 1 to 4
+            ngrams_df, fig = process_and_plot_ngrams(st.session_state.fetched_data, numGrams=n)
+            st.plotly_chart(fig, use_container_width=True)
 
+            # Using download_csv_link function for CSV download
+            download_csv_link(ngrams_df, filename=f"ngrams_{n}.csv")
+            
 if __name__ == "__main__":
     main()
