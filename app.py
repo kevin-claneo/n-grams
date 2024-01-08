@@ -47,8 +47,8 @@ def setup_streamlit():
     Sets the page layout, title, and markdown content with links and app description.
     """
     st.set_page_config(
-    page_title="Topical Authority - Kevin (Claneo)",
-    page_icon=":crown:",
+    page_title="Topical Authority with N-grams - Kevin (Claneo)",
+    page_icon=":balance_scale: ",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
