@@ -171,7 +171,7 @@ def list_gsc_properties(credentials):
     return [site['siteUrl'] for site in site_list.get('siteEntry', [])] or ["No properties found"]
 
 
-def fetch_gsc_data(webproperty, search_type, start_date, end_date, dimensions, max_position, min_clicks, device_type=None):
+def fetch_gsc_data(webproperty, search_type, start_date, end_date, dimensions, max_position, min_clicks, brand_keywords, device_type=None):
     """
     Fetches Google Search Console data for a specified property, date range, dimensions, and device type.
     Filters the data to include only queries with an average position equal to or lower than max_position.
