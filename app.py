@@ -446,6 +446,11 @@ def process_ngrams(df, numGrams, minOccurrences=1):
     final_df = pd.DataFrame(final_data, columns=columns)
     return final_df.sort_values(by='Total Clicks', ascending=False)
 
+def process_and_plot_ngrams(df, numGrams, minOccurrences=1):
+    ngrams_df = process_ngrams(df, numGrams, minOccurrences)
+    fig = px.bar(ngrams_df.head(10), x='Total Clicks', y='Ngram', title=f'Top 10 {numGrams}-grams by Total Clicks')
+    return ngrams_df, fig
+
 # -------------
 # Main Streamlit App Function
 # -------------
