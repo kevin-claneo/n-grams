@@ -482,9 +482,7 @@ def main():
                 for n in range(1, 5):  # For n-grams of length 1 to 4
                     ngrams_df, fig = process_and_plot_ngrams(st.session_state.fetched_data, numGrams=n)
                     st.plotly_chart(fig, use_container_width=True)
-
-            # Using download_csv_link function for CSV download
-            download_csv_link(ngrams_df)
+                    download_csv_link(ngrams_df)
             
 if __name__ == "__main__":
     main()
