@@ -389,10 +389,7 @@ def show_fetch_data_button(webproperty, search_type, start_date, end_date, selec
         
         if report is not None:
             st.session_state.fetched_data = report  # Store in session state
-            show_dataframe(report)
-            download_csv_link(report)
             
-
 def process_ngrams(df, numGrams, minOccurrences=1):
     # Ensure 'clicks' column is of integer type
     df['clicks'] = pd.to_numeric(df['clicks'], errors='coerce').fillna(0).astype(int)
@@ -482,6 +479,7 @@ def main():
                 for n in range(1, 5):  # For n-grams of length 1 to 4
                     ngrams_df, fig = process_and_plot_ngrams(st.session_state.fetched_data, numGrams=n)
                     st.plotly_chart(fig, use_container_width=True)
+                    show_dataframe(ngrams_df)
                     download_csv_link(ngrams_df)
             
 if __name__ == "__main__":
