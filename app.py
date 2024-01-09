@@ -180,19 +180,17 @@ def fetch_gsc_data(webproperty, search_type, start_date, end_date, dimensions, m
 
     if 'device' in dimensions and device_type and device_type != 'All Devices':
         query = query.filter('device', 'equals', device_type.lower())
-
+        st.dataframe(query)
     try:
         df = query.limit(MAX_ROWS).get().to_dataframe()
         if 'clicks' in df.columns and 'position' in df.columns:
             df = df[df['clicks'] >= min_clicks]
             df = df[df['position'] <= max_position]
         else:
-            print("Columns 'clicks' or 'position' not in DataFrame")
-
-        print("Data after filtering:", df.head())
+            show_error("Columns 'clicks' or 'position' not in DataFrame")
         return df
     except Exception as e:
-        print(f"An error occurred: {e}")
+        show_error(e)
         return pd.DataFrame()
         
     except Exception as e:
@@ -384,7 +382,6 @@ def show_fetch_data_button(webproperty, search_type, start_date, end_date, selec
     """
     if st.button("Fetch Data"):
         report = fetch_data_loading(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks, brand_keywords)
-        st.dataframe(data=report)
         '''for brand_keyword in brand_keywords:
             report = report[~report['query'].str.contains(brand_keyword, case=False, na=False)]'''
         
