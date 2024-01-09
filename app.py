@@ -177,7 +177,6 @@ def fetch_gsc_data(webproperty, search_type, start_date, end_date, dimensions, m
     Filters the data to include only queries with an average position equal to or lower than max_position.
     """
     query = webproperty.query.range(start_date, end_date).search_type(search_type).dimension(*dimensions)
-    st.write(query)
     if 'device' in dimensions and device_type and device_type != 'All Devices':
         query = query.filter('device', 'equals', device_type.lower())
     try:
@@ -486,12 +485,12 @@ def main():
             min_clicks = show_min_clicks_input()
             brand_keywords = st_tags(value=[], suggestions=[], label="Brand Keywords", text="Enter brand keywords to exclude", maxtags=-1, key="brand_keywords")
             show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks, brand_keywords)
-            '''if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
+            if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
                 for n in range(1, 5):  # For n-grams of length 1 to 4
                     ngrams_df, fig = process_and_plot_ngrams(st.session_state.fetched_data, numGrams=n)
                     st.plotly_chart(fig, use_container_width=True)
                     show_dataframe(ngrams_df)
-                    download_csv_link(ngrams_df)'''
+                    download_csv_link(ngrams_df)
             
 if __name__ == "__main__":
     main()
