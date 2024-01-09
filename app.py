@@ -490,12 +490,12 @@ def main():
             brand_keywords = st_tags(value=[], suggestions=[], label="Brand Keywords", text="Enter brand keywords to exclude", maxtags=-1, key="brand_keywords")
             show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks, brand_keywords)
             st.dataframe(data=st.session_state.fetched_data)
-            if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
+            '''if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
                 for n in range(1, 5):  # For n-grams of length 1 to 4
                     ngrams_df, fig = process_and_plot_ngrams(st.session_state.fetched_data, numGrams=n)
                     st.plotly_chart(fig, use_container_width=True)
                     show_dataframe(ngrams_df)
-                    download_csv_link(ngrams_df)
+                    download_csv_link(ngrams_df)'''
             
 if __name__ == "__main__":
     main()
