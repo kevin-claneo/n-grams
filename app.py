@@ -399,52 +399,52 @@ def process_ngrams(df, numGrams, minOccurrences=1):
 
     
         # Clean and tokenize the queries
-        def clean_and_tokenize(query):
-            query = re_allowed_chars.sub('', query.lower())
-            words = query.split()
-            words = [word for word in words if word not in stop_words]
-            return [tuple(words[i:i + numGrams]) for i in range(len(words) - numGrams + 1)]
+    def clean_and_tokenize(query):
+        query = re_allowed_chars.sub('', query.lower())
+        words = query.split()
+        words = [word for word in words if word not in stop_words]
+        return [tuple(words[i:i + numGrams]) for i in range(len(words) - numGrams + 1)]
     
-        # Apply the function to the DataFrame
-        df['ngrams'] = df['query'].apply(clean_and_tokenize)
-    
-        # Flatten the list of ngrams and count occurrences
-        ngrams_flat = [ngram for sublist in df['ngrams'] for ngram in sublist]
-        ngram_counts = Counter(ngrams_flat)
-    
-    
-        # Sum clicks for each ngram
-        ngram_clicks = {}
-        ngram_pages = {}
-    
-        calculate_pages = 'page' in df.columns
-         # Process each row for ngrams, clicks, and pages (if applicable)
-        for index, row in df.iterrows():
-            for ngram in row['ngrams']:
-                if ngram in ngram_counts and ngram_counts[ngram] >= minOccurrences:
-                    ngram_clicks[ngram] = ngram_clicks.get(ngram, 0) + row['clicks']
-                    if calculate_pages:
-                        ngram_pages[ngram] = ngram_pages.get(ngram, set()).union({row['page']})
-    
-        # Summarize results
-        final_data = []
-        for ngram, count in ngram_counts.items():
-            if count >= minOccurrences:
-                clicks = ngram_clicks.get(ngram, 0)
-                ngram_str = ' '.join(ngram)
+    # Apply the function to the DataFrame
+    df['ngrams'] = df['query'].apply(clean_and_tokenize)
+
+    # Flatten the list of ngrams and count occurrences
+    ngrams_flat = [ngram for sublist in df['ngrams'] for ngram in sublist]
+    ngram_counts = Counter(ngrams_flat)
+
+
+    # Sum clicks for each ngram
+    ngram_clicks = {}
+    ngram_pages = {}
+
+    calculate_pages = 'page' in df.columns
+     # Process each row for ngrams, clicks, and pages (if applicable)
+    for index, row in df.iterrows():
+        for ngram in row['ngrams']:
+            if ngram in ngram_counts and ngram_counts[ngram] >= minOccurrences:
+                ngram_clicks[ngram] = ngram_clicks.get(ngram, 0) + row['clicks']
                 if calculate_pages:
-                    pages_count = len(ngram_pages[ngram])
-                    final_data.append([ngram_str, count, clicks, pages_count])
-                else:
-                    final_data.append([ngram_str, count, clicks])
-    
-        # Define columns based on whether 'page' is in the DataFrame
-        columns = ['Ngram', 'Occurrences', 'Total Clicks']
-        if calculate_pages:
-            columns.append('Unique Pages')
-    
-        final_df = pd.DataFrame(final_data, columns=columns)
-    return final_df.sort_values(by='Total Clicks', ascending=False)
+                    ngram_pages[ngram] = ngram_pages.get(ngram, set()).union({row['page']})
+
+    # Summarize results
+    final_data = []
+    for ngram, count in ngram_counts.items():
+        if count >= minOccurrences:
+            clicks = ngram_clicks.get(ngram, 0)
+            ngram_str = ' '.join(ngram)
+            if calculate_pages:
+                pages_count = len(ngram_pages[ngram])
+                final_data.append([ngram_str, count, clicks, pages_count])
+            else:
+                final_data.append([ngram_str, count, clicks])
+
+    # Define columns based on whether 'page' is in the DataFrame
+    columns = ['Ngram', 'Occurrences', 'Total Clicks']
+    if calculate_pages:
+        columns.append('Unique Pages')
+
+    final_df = pd.DataFrame(final_data, columns=columns)
+return final_df.sort_values(by='Total Clicks', ascending=False)
 
 def process_and_plot_ngrams(df, numGrams, minOccurrences=1):
     ngrams_df = process_ngrams(df, numGrams, minOccurrences)
