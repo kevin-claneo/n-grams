@@ -496,6 +496,7 @@ def main():
             max_position = show_max_position_selector()
             min_clicks = show_min_clicks_input()
             brand_keywords = st_tags(value=[], suggestions=[make_suggestion(webproperty)], label="Brand Keywords", text="Enter brand keywords to exclude", maxtags=-1, key="brand_keywords")
+            st.write(make_suggestion(webproperty))
             show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks, brand_keywords)
             if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
                 for n in range(1, 5):  # For n-grams of length 1 to 4
