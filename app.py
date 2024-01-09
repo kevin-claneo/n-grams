@@ -177,7 +177,7 @@ def fetch_gsc_data(webproperty, search_type, start_date, end_date, dimensions, m
     Filters the data to include only queries with an average position equal to or lower than max_position.
     """
     query = webproperty.query.range(start_date, end_date).search_type(search_type).dimension(*dimensions)
-    st.write(query.type)
+    st.write(query)
     if 'device' in dimensions and device_type and device_type != 'All Devices':
         query = query.filter('device', 'equals', device_type.lower())
     try:
