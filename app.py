@@ -451,14 +451,6 @@ def process_and_plot_ngrams(df, numGrams, minOccurrences=1):
     fig = px.bar(ngrams_df.head(10), x='Total Clicks', y='Ngram', title=f'Top 10 {numGrams}-grams by Total Clicks')
     return ngrams_df, fig
 
-def make_suggestion(webproperty):
-    pattern = r"(?:sc-domain:|https:\/\/)[a-zA-Z0-9äöüßÄÖÜ.-]*\.([a-zA-Z0-9äöüßÄÖÜ-]+\.[a-zA-ZäöüßÄÖÜ]{2,6})\/?"
-    input_string = str(webproperty)
-    match = re.search(pattern, input_string)
-    if match:
-        return match.group(1)
-    else:
-        return []
 # -------------
 # Main Streamlit App Function
 # -------------
@@ -495,8 +487,7 @@ def main():
             selected_dimensions = show_dimensions_selector(search_type)
             max_position = show_max_position_selector()
             min_clicks = show_min_clicks_input()
-            brand_keywords = st_tags(value=[], suggestions=[make_suggestion(webproperty)], label="Brand Keywords", text="Enter brand keywords to exclude", maxtags=-1, key="brand_keywords")
-            st.write(make_suggestion(webproperty))
+            brand_keywords = st_tags(value=[], suggestions=[], label="Brand Keywords", text="Enter brand keywords to exclude", maxtags=-1, key="brand_keywords")
             show_fetch_data_button(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks, brand_keywords)
             if 'fetched_data' in st.session_state and st.session_state.fetched_data is not None:
                 for n in range(1, 5):  # For n-grams of length 1 to 4
