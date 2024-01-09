@@ -394,10 +394,7 @@ stop_words = set(stopwords.words('english')) | set(stopwords.words('german'))
 re_allowed_chars = re.compile("[^A-Za-z0-9 '’äöüßÄÖÜ]+")
 
 def process_ngrams(df, numGrams, minOccurrences=1):
-    # Ensure 'clicks' column is of integer type
-    if 'clicks' not in df.columns:
-        raise ValueError("The 'clicks' column is missing from the DataFrame.")
-    else:    
+    # Ensure 'clicks' column is of integer type  
         df['clicks'] = pd.to_numeric(df['clicks'], errors='coerce').fillna(0).astype(int)
 
     
@@ -484,6 +481,7 @@ def main():
 
         if properties:
             webproperty = show_property_selector(properties, account)
+            st.write(webproperty)
             search_type = show_search_type_selector()
             date_range_selection = show_date_range_selector()
             start_date, end_date = calc_date_range(date_range_selection)
