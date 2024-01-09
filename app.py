@@ -453,7 +453,8 @@ def process_and_plot_ngrams(df, numGrams, minOccurrences=1):
 
 def make_suggestion(webproperty):
     pattern = r"(?:sc-domain:|https:\/\/)[a-zA-Z0-9äöüßÄÖÜ.-]*\.([a-zA-Z0-9äöüßÄÖÜ-]+\.[a-zA-ZäöüßÄÖÜ]{2,6})\/?"
-    match = re.search(pattern, webproperty)
+    input_string = str(webproperty)
+    match = re.search(pattern, input_string)
     if match:
         return match.group(1)
     else:
