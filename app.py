@@ -444,7 +444,7 @@ def process_ngrams(df, numGrams, minOccurrences=1):
         columns.append('Unique Pages')
 
     final_df = pd.DataFrame(final_data, columns=columns)
-return final_df.sort_values(by='Total Clicks', ascending=False)
+    return final_df.sort_values(by='Total Clicks', ascending=False)
 
 def process_and_plot_ngrams(df, numGrams, minOccurrences=1):
     ngrams_df = process_ngrams(df, numGrams, minOccurrences)
