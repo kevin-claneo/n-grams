@@ -380,8 +380,8 @@ def show_fetch_data_button(webproperty, search_type, start_date, end_date, selec
     """
     if st.button("Fetch Data"):
         report = fetch_data_loading(webproperty, search_type, start_date, end_date, selected_dimensions, max_position, min_clicks, brand_keywords)
-        '''for brand_keyword in brand_keywords:
-            report = report[~report['query'].str.contains(brand_keyword, case=False, na=False)]'''
+        for brand_keyword in brand_keywords:
+            report = report[~report['query'].str.contains(brand_keyword, case=False, na=False)]
         
         if report is not None:
             st.session_state.fetched_data = report  # Store in session state
