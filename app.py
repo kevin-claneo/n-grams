@@ -69,11 +69,6 @@ def setup_streamlit():
 
 def init_session_state():
     """
-    Initialises or updates the Streamlit session state variables for property selection,
-    search type, date range, dimensions, and device type.
-    """
-def init_session_state():
-    """
     Initializes or updates the Streamlit session state variables.
     """
     if 'selected_property' not in st.session_state:
