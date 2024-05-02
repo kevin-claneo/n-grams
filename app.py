@@ -185,10 +185,6 @@ def fetch_gsc_data(webproperty, search_type, start_date, end_date, dimensions, m
     except Exception as e:
         show_error(e)
         return pd.DataFrame()
-        
-    except Exception as e:
-        show_error(e)
-        return pd.DataFrame()
 
 
 def fetch_data_loading(webproperty, search_type, start_date, end_date, dimensions, max_position, min_clicks, brand_keywords, device_type=None):
